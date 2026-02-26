@@ -1,0 +1,386 @@
+/* ==========================================================================
+   BASE Y RESETEO GENERAL
+   --------------------------------------------------------------------------
+   Se eliminan márgenes y se establece una base visual consistente para toda
+   la aplicación. El diseño usa un estilo tipo pergamino con tipografía serif.
+   ========================================================================== */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Georgia', serif;
+  background-color: #f9f5e3;
+  /* Fondo tipo pergamino */
+  color: #4b3621;
+  /* Tinta sepia */
+}
+
+/* ==========================================================================
+   ENCABEZADO PRINCIPAL
+   --------------------------------------------------------------------------
+   Contiene el título del proyecto y la navegación superior.
+   ========================================================================== */
+header {
+  background-color: #8b1e3f;
+  /* Vino tinto */
+  color: white;
+  padding: 20px 0;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.header-content h1 {
+  font-size: 2.5em;
+  margin: 0;
+}
+
+/* Navegación */
+nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 15px 0 0 0;
+  padding: 0;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #dbba28;
+  /* Dorado */
+}
+
+/* ==========================================================================
+   MODAL DE INSTRUCCIONES
+   --------------------------------------------------------------------------
+   Se muestra al inicio para explicar el funcionamiento del chatbot.
+   ========================================================================== */
+.modal-instrucciones {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-contenido {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  padding: 30px;
+  border: 3px solid #8b1e3f;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  color: #4b3621;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.modal-contenido button {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 24px;
+  background-color: #8b1e3f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-contenido button:hover {
+  background-color: #a73155;
+}
+
+/* ==========================================================================
+   CONTENIDO PRINCIPAL
+   ========================================================================== */
+#contenido-principal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  text-align: center;
+  padding: 20px;
+  padding-bottom: 100px;
+}
+
+/* ==========================================================================
+   GALERÍA (Mano - Modelo 3D - Chat - Pluma)
+   ========================================================================== */
+.galeria {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+#Mano {
+  height: 300px;
+}
+
+#Pluma {
+  height: 450px;
+}
+
+/* Contenedor del modelo 3D */
+#modelo-container {
+  width: 400px;
+  height: 535px;
+  position: fixed;
+  bottom: 80px;
+  left: -20px;
+  z-index: 4000;
+}
+
+/* ==========================================================================
+   CHAT FIJO (ESQUINA DERECHA)
+   ========================================================================== */
+#chat-container {
+  width: 300px;
+  height: 300px;
+  background: #f9f5e3;
+  margin-bottom: 35px;
+  /* Pergamino */
+  border: 2px solid #8b1e3f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 12px;
+  position: fixed;
+  bottom: 220px;
+  right: 20px;
+  z-index: 5000;
+  font-family: 'Georgia', serif;
+}
+
+#chat-history {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 6px;
+}
+
+/* Mensajes del chat */
+.msg {
+  margin: 10px 6px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 8px;
+  max-width: 90%;
+  word-wrap: break-word;
+}
+
+.msg.user {
+  background-color: #fff8e1;
+  color: #4b3621;
+  text-align: right;
+  align-self: flex-end;
+  border: 1px solid #dbba28;
+  /* Dorado */
+}
+
+.msg.bot {
+  background-color: #ffffff;
+  color: #4b3621;
+  text-align: left;
+  align-self: flex-start;
+  border: 1px solid #c2b280;
+  /* Beige */
+}
+
+#chat-container input,
+#chat-container button {
+  font-family: 'Georgia', serif;
+  font-size: 0.9em;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #8b1e3f;
+}
+
+#chat-container button {
+  background-color: #8b1e3f;
+  color: white;
+  cursor: pointer;
+}
+
+#chat-container button:hover {
+  background-color: #a73155;
+}
+
+/* ==========================================================================
+   TEXTO SINCRONIZADO CON AUDIO
+   ========================================================================== */
+#texto-sincronizado {
+  margin: 50px auto 160px;
+  max-width: 700px;
+  padding: 20px;
+  font-size: 1.1em;
+  line-height: 1.6;
+  text-align: justify;
+  background-color: #fff8e1;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.highlight {
+  background-color: #ffe9b3;
+  transition: background-color 0.3s ease;
+}
+
+/* ==========================================================================
+   REPRODUCTOR DE AUDIO FIJO
+   ========================================================================== */
+#reproductor-fijo {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #8b1e3f;
+  color: white;
+  padding: 6px 10px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#reproductor-fijo audio {
+  width: 90%;
+  margin-bottom: 6px;
+}
+
+#botones-audio button {
+  margin: 0 4px;
+  padding: 5px 10px;
+  background: #fff;
+  color: #8b1e3f;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#botones-audio button:hover {
+  background: #f0e0e0;
+}
+
+/* ==========================================================================
+   PIE DE PÁGINA
+   ========================================================================== */
+footer {
+  background-color: #c2b280;
+  color: #4b3621;
+  padding: 10px 0;
+  text-align: center;
+}
+
+footer a {
+  text-decoration: none;
+  color: white;
+}
+
+footer a:hover {
+  color: #dbba28;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   --------------------------------------------------------------------------
+   Ajustes para pantallas pequeñas (móviles y tablets).
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  .galeria {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #chat-container {
+    width: 90%;
+    right: 5%;
+    bottom: 100px;
+  }
+
+  #modelo-container {
+    width: 280px;
+    height: 400px;
+    left: 10px;
+    bottom: 100px;
+  }
+
+  /* Animación opcional para el modelo en pantallas pequeñas */
+  #modelo-container.animando {
+    animation: moverQuijote 1s infinite alternate ease-in-out;
+  }
+
+  @keyframes moverQuijote {
+    0% {
+      transform: translateY(0);
+    }
+
+    100% {
+      transform: translateY(-10px);
+    }
+  }
+
+  #texto-sincronizado {
+    max-width: 90%;
+    margin: 20px auto 160px;
+  }
+}
+
+/* Estilo del Spinner (Escribiendo...) */
+#spinner {
+  padding: 2px 10px;
+  margin-bottom: 5px;
+  font-size: 0.85em;
+  color: #8b1e3f;
+  /* Color vino tinto como tu header */
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  animation: escribir-latido 1.5s infinite ease-in-out;
+}
+
+@keyframes escribir-latido {
+  0% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.4;
+  }
+}

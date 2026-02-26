@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Interacción inteligente con Don Quijote de la Mancha mediante IA. Una experiencia inmersiva de literatura y tecnología." />
+  <meta name="keywords" content="Don Quijote, IA, Chatbot, Literatura, Cervantes, OpenRouter, Educación" />
+  <meta name="author" content="Proyecto Don Quijote Team" />
+  <meta property="og:title" content="Don Quijote IA - El Caballero de la Triste Inteligencia" />
+  <meta property="og:description"
+    content="Conversa con el Hidalgo más famoso de la literatura española a través de inteligencia artificial avanzada." />
+  <meta property="og:type" content="website" />
+  <title>Don Quijote IA | Experiencia Interactiva</title>
+
+  <link rel="stylesheet" href="don.css" />
+  <link rel="icon" href="Image/Imagen4.png" type="image/png" />
+  <style>
+    /* Navegación Horizontal para los 52 capítulos */
+    #chapter-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+      gap: 10px;
+      padding: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(139, 30, 63, 0.3);
+      scrollbar-width: thin;
+      scrollbar-color: #8b1e3f rgba(255, 255, 255, 0.1);
+    }
+
+    /* Estilo para navegadores Webkit (Chrome, Safari, Edge) */
+    #chapter-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #chapter-container::-webkit-scrollbar-thumb {
+      background: #8b1e3f;
+      border-radius: 10px;
+    }
+
+    #chapter-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    #chapter-container button {
+      flex: 0 0 auto;
+      /* No se encogen */
+      padding: 10px 20px;
+      font-size: 0.9em;
+      background: #8b1e3f;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    #chapter-container button:hover {
+      background: #a5264d;
+    }
+
+    #chapter-container button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       Modal de BIENVENIDA (A11y optimizado)
+       ============================================================ -->
+  <div id="modal-instrucciones" class="modal-instrucciones" role="dialog" aria-labelledby="modal-title"
+    aria-modal="true">
+    <div class="modal-contenido">
+      <h1 id="modal-title">¡Hola, valiente aventurero! 🏰</h1>
+
+      <p>Estás a punto de entrar a un libro mágico para platicar con el caballero <strong>Don Quijote de la
+          Mancha</strong>.</p>
+
+      <h3>🎤 Pasos para tu aventura:</h3>
+      <ol>
+        <li><strong>Despierta su oído:</strong> Presiona el botón del 🎤 para que el caballero te preste atención.</li>
+        <li><strong>¡Llámalo por su nombre!:</strong> Di fuerte <strong>“¡Oye Don Quijote!”</strong> y él te saludará de
+          inmediato.</li>
+        <li><strong>Platícale tus dudas:</strong> Pregúntale lo que quieras; él te escuchará atento.</li>
+      </ol>
+
+      <div class="consejos-box">
+        <p><strong>🌟 Secretos de caballero:</strong></p>
+        <ul style="text-align: left; margin: 10px 0 15px 20px;">
+          <li>Habla claro y con valor, como si estuvieras en un castillo. ⚔️</li>
+          <li>La IA procesará tus palabras con sabiduría antigua.</li>
+        </ul>
+      </div>
+
+      <p>¿Tienes lista tu armadura para comenzar?</p>
+      <button id="btn-aceptar" aria-label="Aceptar instrucciones y comenzar aventura">¡Sí, a la aventura!</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Contenido principal
+       ============================================================ -->
+  <div id="contenido-principal" style="display:none;">
+
+    <header role="banner">
+      <div class="header-content">
+        <img id="Papel" src="Image/Imagen2.png" alt="Icono de papel antiguo" style="width:60px;height:60px;" />
+        <h1>Don Quijote IA</h1>
+        <img id="Libro" src="Image/Imagen4.png" alt="Icono de libro del Quijote" style="width:60px;height:60px;" />
+      </div>
+
+      <nav role="navigation" aria-label="Menú principal">
+        <ul>
+          <li><a href="#chat-container">Conversar</a></li>
+          <li><a href="#texto-sincronizado">Lectura</a></li>
+          <li><a href="#reproductor-fijo">Audiolibro</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main role="main">
+      <section class="hero-section">
+        <h1>¡Platica con el Hidalgo!</h1>
+        <p>Explora las aventuras y la sabiduría de Don Quijote en tiempo real.</p>
+      </section>
+
+      <div class="galeria">
+        <img id="Mano" src="Image/Imagen3.png" alt="Decoración: Mano del Quijote" role="presentation" />
+
+        <div id="modelo-container" aria-label="Visualización 3D del Quijote"></div>
+
+        <div id="chat-container" role="log" aria-live="polite">
+          <div id="chat-history" aria-label="Historial de conversación"></div>
+
+          <div id="spinner" style="display:none; text-align:center; margin:10px 0;">
+            <span class="sr-only">El Quijote está pensando...</span>
+            <em>Pensando...</em>
+          </div>
+
+          <div class="input-group" style="display:flex; gap:10px; margin-top:10px;">
+            <input id="chat-input" type="text" placeholder="Escribe tu mensaje aquí..."
+              aria-label="Mensaje para Don Quijote" style="flex:1; padding:10px;">
+            <button id="mic-btn" type="button" aria-label="Activar reconocimiento de voz">🎤</button>
+            <button id="send-btn" type="button" aria-label="Enviar mensaje">Enviar</button>
+          </div>
+
+          <!-- Métrica técnica sutil -->
+          <div id="technical-metrics"
+            style="font-size: 0.7em; color: #8b1e3f; margin-top: 8px; font-family: monospace; opacity: 0.8;">
+            Esperando conexión...
+          </div>
+        </div>
+
+        <img id="Pluma" src="Image/Imagen1.png" alt="Decoración: Pluma de escribir" role="presentation" />
+      </div>
+
+      <div id="texto-sincronizado" aria-label="Texto del libro sincronizado con audio"></div>
+    </main>
+
+    <footer role="contentinfo">
+      <div class="footer-stats">
+        <p>&copy; 2026 Don Quijote IA. Tecnología de vanguardia y letras clásicas.</p>
+        <div id="global-metrics-footer" style="font-size: 0.8em; margin-top: 5px;">
+          Payload: <span id="stat-payload">0b</span> |
+          Tokens: <span id="stat-tokens">0</span> |
+          Mensajes: <span id="stat-messages">0</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       Reproductor de audio (A11y optimizado)
+       ============================================================ -->
+  <div id="reproductor-fijo" role="region" aria-label="Reproductor de audiolibro">
+    <!-- Fila superior: Controles -->
+    <div
+      style="display: flex; align-items: center; justify-content: center; width: 100%; gap: 15px; flex-wrap: wrap; margin-bottom: 5px;">
+      <audio id="audio-quijote" controls style="flex: 1; max-width: 500px; height: 32px;"></audio>
+
+      <div style="display: flex; gap: 5px; align-items: center;">
+        <input id="salto-tiempo" type="text" placeholder="1:10:20"
+          style="width: 70px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8em; color: #333;">
+        <button id="btn-salto-tiempo"
+          style="padding: 4px 8px; font-size: 0.8em; background:#fff; color:#8b1e3f; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Ir</button>
+      </div>
+    </div>
+
+    <!-- Fila inferior: Capítulos -->
+    <div id="chapter-container">
+      <!-- Generado dinámicamente por JS -->
+    </div>
+  </div>
+
+  <script>
+    // Generación dinámica de los 52 capítulos
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("chapter-container");
+      if (!container) return;
+      container.innerHTML = ""; // Limpiar por si acaso
+      for (let i = 1; i <= 52; i++) {
+        const num = String(i).padStart(2, '0');
+        const btn = document.createElement("button");
+        btn.textContent = `Cap ${i}`;
+        btn.dataset.audio = `./split_audios/chapter_${num}.mp3`;
+        btn.dataset.json = `./capitulos/chapter_${num}_adjusted.json`;
+        btn.setAttribute("aria-label", `Cargar capítulo ${i}`);
+        container.appendChild(btn);
+      }
+    });
+  </script>
+
+  <!-- Scripts con soporte de módulos ES6 -->
+  <script src="js/ui.js" type="module"></script>
+  <script src="js/animacionQuijote.js" type="module"></script>
+  <script src="js/tts.js" type="module"></script>
+  <script src="js/recognition.js" type="module"></script>
+  <script src="js/chat.js" type="module"></script>
+  <script src="js/sync.js" type="module"></script>
+
+</body>
+
+</html>
