@@ -1,4 +1,14 @@
 <?php
+// 1. Permitir cualquier origen (Vercel)
+header("Access-Control-Allow-Origin: *");
+// 2. Permitir métodos POST y JSON
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// 3. Manejar la petición "preflight" (OPTIONS) que hace el navegador
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit;
+}
 /* ============================================================
    1. CONFIGURACIÓN DE SEGURIDAD Y CARGA DE VARIABLES
    ============================================================ */
@@ -166,4 +176,5 @@ echo json_encode([
         "estimated_tokens" => ceil($payload_size / 4) // Estimación ruda
     ]
 ]);
+
 
