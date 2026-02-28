@@ -42,17 +42,18 @@ export async function enviarMensaje(texto) {
         if (data && data.reply) {
             const respuestaQuijote = data.reply;
 
-            // 3. Mostrar métricas de rendimiento en UI y consola
+            // --- ESTE ES EL CAMBIO QUE DEBES PONER ---
             if (data.metrics) {
                 const { payload_bytes, message_count, estimated_tokens } = data.metrics;
 
-                // Actualizar cajita sutil en el chat
+                // 1. Actualiza la etiqueta "Esperando conexión..." por el estado real
                 const metricsEl = document.getElementById("technical-metrics");
                 if (metricsEl) {
-                    metricsEl.textContent = `Latencia: OK | Tráfico: ${payload_bytes} bytes | Contexto: ${message_count} msg`;
+                    metricsEl.textContent = `● Sistema Conectado | Tráfico: ${payload_bytes} bytes | Contexto: ${message_count} msg`;
+                    metricsEl.style.color = "#28a745"; // Lo pone en verde éxito
                 }
 
-                // Actualizar estadísticas globales en el footer
+                // 2. Actualiza los contadores globales en el footer
                 const statPayload = document.getElementById("stat-payload");
                 const statTokens = document.getElementById("stat-tokens");
                 const statMessages = document.getElementById("stat-messages");
@@ -60,14 +61,13 @@ export async function enviarMensaje(texto) {
                 if (statPayload) statPayload.textContent = `${payload_bytes}b`;
                 if (statTokens) statTokens.textContent = estimated_tokens;
                 if (statMessages) statMessages.textContent = message_count;
-
-                console.log(`[Metricas] Payload: ${payload_bytes} bytes | Mensajes: ${message_count} | Tokens est.: ${estimated_tokens}`);
             }
 
-            // 4. Responder en pantalla, memoria y voz
             addMsg("Quijote", respuestaQuijote);
             conversationHistory.push({ role: "assistant", content: respuestaQuijote });
             speak(respuestaQuijote);
+            
+            // ... resto de tu código de resumen ...
 
             // 5. Gestión inteligente de memoria
             // Umbral: Más de 10 mensajes o más de 2000 caracteres en el historial
@@ -154,3 +154,4 @@ inputChat.addEventListener("keydown", (e) => {
     }
 
 });
+
