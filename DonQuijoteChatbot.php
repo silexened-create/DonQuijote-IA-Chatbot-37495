@@ -2,21 +2,22 @@
 /* ============================================================
    1. CONFIGURACIÓN DE SEGURIDAD Y CARGA DE VARIABLES
    ============================================================ */
-// Usamos parse_ini_file por ser una función nativa de PHP más rápida y limpia
-$envPath = __DIR__ . '/.env';
+// 1. Intentar leer desde el sistema (Render/Docker)
+$apiKey = getenv("OPENROUTER_API_KEY");
 
-if (!file_exists($envPath)) {
-    header("Content-Type: application/json");
-    echo json_encode(["error" => "❌ Falta el archivo .env config"]);
-    exit;
+// 2. Si no existe en el sistema, buscar archivo .env (Localhost)
+if (!$apiKey) {
+    $envPath = __DIR__ . '/.env';
+    if (file_exists($envPath)) {
+        $env = @parse_ini_file($envPath);
+        $apiKey = $env["OPENROUTER_API_KEY"] ?? null;
+    }
 }
 
-$env = @parse_ini_file($envPath);
-$apiKey = $env["OPENROUTER_API_KEY"] ?? null;
-
+// 3. Si después de ambos intentos no hay nada, dar error
 if (!$apiKey) {
     header("Content-Type: application/json");
-    echo json_encode(["error" => "❌ API Key no configurada"]);
+    echo json_encode(["error" => "❌ API Key no configurada en el sistema ni en .env"]);
     exit;
 }
 /* ============================================================
@@ -165,3 +166,4 @@ echo json_encode([
         "estimated_tokens" => ceil($payload_size / 4) // Estimación ruda
     ]
 ]);
+
