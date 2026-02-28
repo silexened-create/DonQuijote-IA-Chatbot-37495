@@ -83,16 +83,35 @@ recog.onresult = async (evt) => {
   console.log("✍️ [Acumulando]:", preguntaPendiente);
 };
 
+// Variable para controlar el tiempo de espera
+let reintentoTimer = null;
+
 recog.onend = () => {
   recognitionRunning = false;
   console.log("🔌 [Evento]: onend detectado.");
+  
+  // Si el usuario tiene el micro activado y no estamos procesando ni hablando
   if (escuchando && modo !== "processing" && !window.quijoteHablando) {
-    iniciarReconocimiento();
+    console.log("⏳ [Sistema]: Pausa de seguridad de 1s para evitar error de red...");
+    clearTimeout(reintentoTimer);
+    reintentoTimer = setTimeout(() => {
+      iniciarReconocimiento();
+    }, 1000); // Damos un respiro al navegador
   }
 };
 
 recog.onerror = (event) => {
   console.error("❌ [Error Micro]:", event.error);
+  
+  // Si el error es 'network', es que el socket se saturó
+  if (event.error === 'network') {
+    console.warn("⚠️ [Aviso]: Error de red detectado. Reintentando en 3s...");
+    detenerReconocimiento();
+    // Reintento largo para limpiar el estado del navegador
+    setTimeout(() => {
+      if (escuchando) iniciarReconocimiento();
+    }, 3000);
+  }
 };
 
 async function procesarEntrada(texto) {
@@ -151,3 +170,4 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
