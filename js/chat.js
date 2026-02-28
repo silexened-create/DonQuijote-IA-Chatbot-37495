@@ -10,7 +10,7 @@ import { speak } from './tts.js';
 /* --- CONFIGURACIÓN Y MEMORIA --- */
 export let conversationHistory = [];
 export let selectedModel = "trinity";
-const BACKEND_URL = "./DonQuijoteChatbot.php";
+const BACKEND_URL = "https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php";
 
 /* --- FUNCIÓN PRINCIPAL: Enviar Mensaje --- */
 export async function enviarMensaje(texto) {
@@ -152,4 +152,5 @@ inputChat.addEventListener("keydown", (e) => {
         enviarMensaje(inputChat.value);
         inputChat.value = "";
     }
+
 });
