@@ -101,7 +101,7 @@ async function procesarEntrada(texto) {
   addMsg('Tú', texto);
 
   try {
-    const r = await fetch("./DonQuijoteChatbot.php", {
+    const r = await fetch("https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: texto })
@@ -149,4 +149,5 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
 });
