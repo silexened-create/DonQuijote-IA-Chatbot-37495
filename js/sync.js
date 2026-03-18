@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadChapter(nombreJson) {
         try {
             // Determinar la carpeta de origen
-            const folder = isEnglishPage ? 'english_assets/capitulos' : 'capitulos';
+            const folder = isEnglishPage ? 'capitulos_english' : 'capitulos';
 
             // Construir la ruta final
             const path = nombreJson.startsWith("./") ? nombreJson : `./${folder}/${nombreJson}`;
