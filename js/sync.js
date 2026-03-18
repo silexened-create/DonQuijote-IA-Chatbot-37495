@@ -14,6 +14,8 @@
 window.advertenciaActiva = true;
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. DECLARA ESTO AQUÍ ARRIBA (Para que sea visible en todas las funciones)
+    const isEnglishPage = window.location.pathname.includes('english.html');
 
     const audio = document.getElementById("audio-quijote");
     const textoContenedor = document.getElementById("texto-sincronizado");
@@ -90,7 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================================== */
     async function loadChapter(nombreJson) {
         try {
-            const path = nombreJson.startsWith("./") ? nombreJson : `./capitulos/${nombreJson}`;
+            // Determinar la carpeta de origen
+            const folder = isEnglishPage ? 'english_assets/capitulos' : 'capitulos';
+
+            // Construir la ruta final
+            const path = nombreJson.startsWith("./") ? nombreJson : `./${folder}/${nombreJson}`;
             const r = await fetch(path);
 
             if (!r.ok) {
@@ -144,22 +150,23 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("beforeunload", e => {
 
         // Si la advertencia está desactivada → no hacer nada
-        if (!window.advertenciaActiva) return;
-
-        // Si el audio está reproduciéndose → NO mostrar advertencia
-        if (!audio.paused) return;
-
-        // Si el reconocimiento está activo → NO mostrar advertencia
-        if (window.escuchando) return;
+        if (!window.advertenciaActiva || !audio.paused || window.escuchando) return;
 
         const tiempo = audio.currentTime;
         const tiempoTexto = new Date(tiempo * 1000).toISOString().substr(11, 8);
         const capitulo = audio.dataset.capitulo || "desconocido";
 
-        const nombreCapitulo = capitulo.replace("chapter_", "Capítulo ").replace("_adjusted.json", "");
+        const nombreCapitulo = capitulo
+            .replace("chapter_", isEnglishPage ? "Chapter " : "Capítulo ")
+            .replace("_adjusted.json", "");
+
         e.preventDefault();
-        e.returnValue =
-            `⚠️ Te quedaste en el ${nombreCapitulo} en el tiempo ${tiempoTexto}.`;
+        const msg = isEnglishPage
+            ? `⚠️ You stopped at ${nombreCapitulo} at ${tiempoTexto}.`
+            : `⚠️ Te quedaste en el ${nombreCapitulo} en el tiempo ${tiempoTexto}.`;
+
+        e.returnValue = msg; // Esto seguirá tachado, pero funcionará.
+        return msg;
     });
 
     /* ==========================================================================

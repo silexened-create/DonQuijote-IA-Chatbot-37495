@@ -1,157 +1,194 @@
 /**
- * chat.js — Versión Amigable y Optimizada
+ * chat.js — Versión Dual Snicket/Quijote (Corregida)
  * ---------------------------------------------------------------------------
- * Gestiona la conversación y la memoria de Don Quijote.
+ * Gestiona la comunicación con los dos backends especializados.
  */
 
 import { addMsg, showSpinner, hideSpinner } from './ui.js';
 import { speak } from './tts.js';
 
-/* --- CONFIGURACIÓN Y MEMORIA --- */
+/* --- DETECCIÓN DE ENTORNO --- */
+const isEnglishPage = window.location.pathname.includes('english.html');
+const TUTOR_NAME = isEnglishPage ? "Lemony" : "Quijote";
+
+/* --- CONFIGURACIÓN DE ENDPOINTS --- */
+// Detectamos si estamos en entorno local o en Render
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+console.log(`[Config] Entorno detectado: ${isLocal ? 'DEVELOPMENT (Local)' : 'PRODUCTION (Render)'}`);
+
+const backendUrlLemony = isLocal 
+    ? "./lemony.php" 
+    : "https://don-quijote-backend.onrender.com/Lemony.php";
+const backendUrlQuijote = isLocal 
+    ? "./DonQuijoteChatbot.php" 
+    : "https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php";
+
+const BACKEND_URL = isEnglishPage ? backendUrlLemony : backendUrlQuijote;
+console.log(`[Config] Endpoint seleccionado: ${BACKEND_URL} (isEnglishPage: ${isEnglishPage})`);
+
+/* --- MEMORIA DINÁMICA --- */
 export let conversationHistory = [];
 export let selectedModel = "trinity";
-const BACKEND_URL = "https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php";
 
-/* --- FUNCIÓN PRINCIPAL: Enviar Mensaje --- */
-export async function enviarMensaje(texto) {
+/**
+ * Envía el mensaje al backend correspondiente
+ * @param {string} texto 
+ * @param {boolean} silent - Si es true, no añade el mensaje del usuario a la UI (útil para voz que ya lo añade)
+ * @param {function} onSpeakEnd - Callback opcional para ejecutar al terminar el TTS
+ */
+export async function enviarMensaje(texto, silent = false, onSpeakEnd = null) {
     const mensajeLimpio = texto.trim();
     if (!mensajeLimpio) return;
 
-    // 1. Mostrar en interfaz y guardar en memoria
-    addMsg("Tú", mensajeLimpio);
+    // 1. Interfaz y Memoria Local
+    if (!silent) addMsg("Tú", mensajeLimpio);
     conversationHistory.push({ role: "user", content: mensajeLimpio });
 
     showSpinner();
 
     try {
-        // 2. Llamada al Hidalgo (Backend)
+        console.log(`[Fetch] Iniciando petición a: ${BACKEND_URL}`);
+        console.log(`[Fetch] Payload a enviar:`, { message: mensajeLimpio, model: selectedModel, isEnglish: isEnglishPage });
+        
+        // 2. Petición al Servidor con Headers reforzados para evitar errores de CORS
         const response = await fetch(BACKEND_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            mode: "cors",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            },
             body: JSON.stringify({
                 message: mensajeLimpio,
                 history: conversationHistory,
-                model: selectedModel
+                model: selectedModel,
+                isEnglish: isEnglishPage,
+                isSummary: false
             })
         });
 
-        if (!response.ok) throw new Error(`Error de red: ${response.status}`);
+        if (!response.ok) {
+            console.error(`[Fetch Error] Falló respuesta del servidor. Status HTTP: ${response.status} ${response.statusText}`);
+            const errorData = await response.json().catch(() => ({}));
+            console.error(`[Fetch Error] Detalles de error capturados (si existen):`, errorData);
+            throw new Error(errorData.reply || `Error HTTP: ${response.status}`);
+        }
 
         const data = await response.json();
+        console.log(`[Fetch Success] Datos recibidos exitosamente:`, data);
 
         if (data && data.reply) {
-            const respuestaQuijote = data.reply;
+            const respuestaIA = data.reply;
 
-            // --- ESTE ES EL CAMBIO QUE DEBES PONER ---
-            if (data.metrics) {
-                const { payload_bytes, message_count, estimated_tokens } = data.metrics;
+            // 3. Actualización de métricas en UI
+            actualizarMetricasUI(data.metrics);
 
-                // 1. Actualiza la etiqueta "Esperando conexión..." por el estado real
-                const metricsEl = document.getElementById("technical-metrics");
-                if (metricsEl) {
-                    metricsEl.textContent = `● Sistema Conectado | Tráfico: ${payload_bytes} bytes | Contexto: ${message_count} msg`;
-                    metricsEl.style.color = "#28a745"; // Lo pone en verde éxito
-                }
+            // 4. Respuesta visual, auditiva y memoria
+            addMsg(TUTOR_NAME, respuestaIA);
+            conversationHistory.push({ role: "assistant", content: respuestaIA });
 
-                // 2. Actualiza los contadores globales en el footer
-                const statPayload = document.getElementById("stat-payload");
-                const statTokens = document.getElementById("stat-tokens");
-                const statMessages = document.getElementById("stat-messages");
-
-                if (statPayload) statPayload.textContent = `${payload_bytes}b`;
-                if (statTokens) statTokens.textContent = estimated_tokens;
-                if (statMessages) statMessages.textContent = message_count;
+            // Ejecutar TTS (Voz configurada en tts.js)
+            // Pasamos un callback vacío para que el sistema de voz sepa cuándo termina si fuera necesario
+            if (onSpeakEnd) {
+                speak(respuestaIA, onSpeakEnd);
+            } else {
+                speak(respuestaIA);
             }
 
-            addMsg("Quijote", respuestaQuijote);
-            conversationHistory.push({ role: "assistant", content: respuestaQuijote });
-            speak(respuestaQuijote);
-            
-            // ... resto de tu código de resumen ...
-
-            // 5. Gestión inteligente de memoria
-            // Umbral: Más de 10 mensajes o más de 2000 caracteres en el historial
-            const totalChars = conversationHistory.reduce((acc, m) => acc + m.content.length, 0);
-            if (conversationHistory.length >= 10 || totalChars > 2000) {
+            // 5. Control de saturación (Resumen cada 10 mensajes)
+            if (conversationHistory.length >= 10) {
                 await resumirHistorial();
             }
-        } else {
-            throw new Error("Respuesta del servidor incompleta.");
+
+            return respuestaIA; // Retornamos para que recognition.js pueda usarlo si necesita
         }
 
     } catch (err) {
-        console.error("🔥 Error en la comunicación:", err);
-        addMsg("Error", "¡Pardiez! Un encantador ha cortado nuestra comunicación o el mensaje era demasiado largo.");
-
-        // Recuperación: Si el error es por tamaño, intentamos resumir preventivamente
-        if (conversationHistory.length > 5) {
-            console.warn("Intentando recuperación de historial saturado...");
-            await resumirHistorial();
-        }
+        console.error("🔥 Error en comunicación:", err);
+        const errorMsg = isEnglishPage
+            ? `An unfortunate error has blocked our correspondence. (${err.message})`
+            : `¡Pardiez! Un encantador ha cortado nuestra comunicación. (${err.message})`;
+        addMsg("Error", errorMsg);
     } finally {
         hideSpinner();
     }
 }
 
-/* --- RESUMEN DE AVENTURAS (Optimización de memoria) --- */
+/**
+ * Reduce el historial mediante IA
+ */
 async function resumirHistorial() {
-    console.log("📜 Optimizando la memoria del Hidalgo...");
+    console.log("📜 Optimizando memoria del tutor...");
     try {
-        // Guardamos los últimos 3 mensajes para mantener la fluidez inmediata
         const mensajesRecientes = conversationHistory.slice(-3);
-        const mensajesParaResumir = conversationHistory.slice(0, -3);
-
-        if (mensajesParaResumir.length === 0) return;
-
-        const textoParaResumir = mensajesParaResumir
-            .map(m => `${m.role === 'user' ? 'Escudero' : 'Quijote'}: ${m.content}`)
-            .join("\n");
 
         const response = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                message: "Resume nuestras aventuras pasadas.",
-                history: [{ role: "user", content: textoParaResumir }],
+                message: isEnglishPage ? "Summarize our progress." : "Resume nuestras aventuras.",
+                history: conversationHistory,
                 model: selectedModel,
-                isSummary: true
+                isSummary: true,
+                isEnglish: isEnglishPage
             })
         });
 
         const data = await response.json();
-
         if (data.reply) {
-            // Reconstruimos el historial: Resumen + Ultimos 3 mensajes
+            const prefijo = isEnglishPage ? "[Previous Records]: " : "[Memoria de mis andanzas]: ";
             conversationHistory = [
-                { role: "assistant", content: "[Memoria de mis andanzas]: " + data.reply },
+                { role: "assistant", content: prefijo + data.reply },
                 ...mensajesRecientes
             ];
-            console.log("✅ Historial optimizado con éxito.");
+            console.log("✅ Memoria optimizada.");
         }
     } catch (err) {
-        console.warn("No se pudo resumir el historial, truncando por seguridad.", err);
-        // Fallback: Si falla la IA al resumir, simplemente truncamos
+        console.warn("Fallo al resumir, truncando historial manualmente.");
         conversationHistory = conversationHistory.slice(-5);
     }
 }
 
-/* --- GESTIÓN DE EVENTOS (Controles) --- */
+/**
+ * Actualiza los elementos de texto con los datos técnicos del servidor
+ */
+function actualizarMetricasUI(metrics) {
+    if (!metrics) return;
+
+    const metricsEl = document.getElementById("technical-metrics");
+    if (metricsEl) {
+        const msgCount = metrics.message_count || conversationHistory.length;
+        metricsEl.textContent = `Status: Connected | Context: ${msgCount} msgs | Model: ${selectedModel}`;
+    }
+
+    const statPayload = document.getElementById("stat-payload");
+    const statTokens = document.getElementById("stat-tokens");
+
+    if (statPayload && metrics.payload_bytes) {
+        statPayload.textContent = `${(metrics.payload_bytes / 1024).toFixed(2)} KB`;
+    }
+    if (statTokens && metrics.estimated_tokens) {
+        statTokens.textContent = metrics.estimated_tokens;
+    } else if (statTokens) {
+        statTokens.textContent = Math.ceil((metrics.payload_bytes || 0) / 4);
+    }
+}
+
+/* --- LISTENERS DE INTERFAZ --- */
 const inputChat = document.getElementById("chat-input");
 const btnEnviar = document.getElementById("send-btn");
 
-// Click en el botón
-btnEnviar.addEventListener("click", () => {
-    enviarMensaje(inputChat.value);
-    inputChat.value = "";
-});
-
-// Presionar tecla Enter
-inputChat.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault(); // Evita recargas accidentales
+if (btnEnviar && inputChat) {
+    btnEnviar.addEventListener("click", () => {
         enviarMensaje(inputChat.value);
         inputChat.value = "";
-    }
+    });
 
-});
-
+    inputChat.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            enviarMensaje(inputChat.value);
+            inputChat.value = "";
+        }
+    });
+}

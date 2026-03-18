@@ -1,5 +1,29 @@
 import { addMsg, showSpinner, hideSpinner } from './ui.js';
 import { speak } from './tts.js';
+import { enviarMensaje } from './chat.js';
+
+/* --- CONFIGURACIÓN DINÁMICA --- */
+const isEnglishPage = window.location.pathname.includes('english.html');
+
+// Idioma del micrófono
+const MIC_LANG = isEnglishPage ? "en-US" : "es-ES";
+
+// Palabras clave de activación (Wake words)
+const WAKE_WORDS = isEnglishPage
+  ? ["hello tutor", "hey tutor", "hello teacher"]
+  : ["oye quijote", "oye don quijote", "hola quijote"];
+
+// Comandos de envío
+const SEND_COMMANDS = isEnglishPage
+  ? ["send message", "reply", "answer me", "send"]
+  : ["responde quijote", "dime quijote", "contesta quijote", "enviar"];
+
+// Respuestas de voz del sistema
+const GREETING = isEnglishPage ? "Tell me, what words confuse you?" : "Decidme, ¿qué cuita os aflige?";
+const INSTRUCTIONS = isEnglishPage
+  ? "Speak, pupil. Say 'hey tutor' to start and 'reply' to finish."
+  : "Hablad, caballero. Decid 'Oye Quijote' para iniciar y 'Responde Quijote' para enviar.";
+const FAREWELL = isEnglishPage ? "Goodbye. Read carefully." : "Quedad con Dios. Mi lanza descansa.";
 
 let modo = "idle";
 let preguntaPendiente = "";
@@ -8,7 +32,7 @@ let recognitionRunning = false;
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recog = new SR();
-recog.lang = "es-ES";
+recog.lang = MIC_LANG;
 recog.interimResults = false;
 recog.continuous = true;
 
@@ -44,101 +68,69 @@ export function detenerReconocimiento() {
     console.log("🛑 [Sistema]: Micrófono en pausa.");
   } catch (e) { }
 }
-
 recog.onresult = async (evt) => {
   if (window.quijoteHablando) return;
 
+  // 1. Capturar lo que el usuario dijo
   let text = evt.results[evt.results.length - 1][0].transcript.trim().toLowerCase();
   console.log("🟩 [Audio]:", text);
-
-  const inicios = ["oye quijote", "oye don quijote", "hola quijote"];
-  if (inicios.some(d => text.includes(d))) {
+  // --- Detección de Inicio ---
+  if (WAKE_WORDS.some(d => text.includes(d))) {
     modo = "keyword";
     preguntaPendiente = "";
     detenerReconocimiento();
-    console.log("⚔️ [Modo]: Quijote atento.");
-    speak("Decidme, ¿qué cuita os aflige?", () => {
-      iniciarReconocimiento();
-    });
+    console.log("🔔 [Modo]: Tutor atento.");
+    speak(GREETING, () => iniciarReconocimiento());
     return;
   }
 
   if (modo !== "keyword") return;
 
-  const fines = ["responde quijote", "dime quijote", "contesta quijote", "enviar"];
-  if (fines.some(f => text.includes(f))) {
+  // --- Detección de Envío ---
+  if (SEND_COMMANDS.some(f => text.includes(f))) {
     let limpia = text;
-    fines.forEach(f => limpia = limpia.replace(f, ""));
+    SEND_COMMANDS.forEach(f => limpia = limpia.replace(f, ""));
     const mensajeFinal = (preguntaPendiente + " " + limpia).trim();
 
     if (mensajeFinal.length > 2) {
-      console.log("📤 [Procesando]:", mensajeFinal);
       modo = "processing";
       procesarEntrada(mensajeFinal);
     }
     return;
   }
-
+  // 3. Acumular texto
   preguntaPendiente += " " + text;
-  console.log("✍️ [Acumulando]:", preguntaPendiente);
 };
-
-// Variable para controlar el tiempo de espera
-let reintentoTimer = null;
 
 recog.onend = () => {
   recognitionRunning = false;
   console.log("🔌 [Evento]: onend detectado.");
-  
-  // Si el usuario tiene el micro activado y no estamos procesando ni hablando
   if (escuchando && modo !== "processing" && !window.quijoteHablando) {
-    console.log("⏳ [Sistema]: Pausa de seguridad de 1s para evitar error de red...");
-    clearTimeout(reintentoTimer);
-    reintentoTimer = setTimeout(() => {
-      iniciarReconocimiento();
-    }, 1000); // Damos un respiro al navegador
+    iniciarReconocimiento();
   }
 };
 
 recog.onerror = (event) => {
   console.error("❌ [Error Micro]:", event.error);
-  
-  // Si el error es 'network', es que el socket se saturó
-  if (event.error === 'network') {
-    console.warn("⚠️ [Aviso]: Error de red detectado. Reintentando en 3s...");
-    detenerReconocimiento();
-    // Reintento largo para limpiar el estado del navegador
-    setTimeout(() => {
-      if (escuchando) iniciarReconocimiento();
-    }, 3000);
-  }
 };
 
+/**
+ * Procesa la entrada de voz usando el motor unificado de chat.js
+ */
 async function procesarEntrada(texto) {
   detenerReconocimiento();
-  showSpinner();
-  addMsg('Tú', texto);
-
-  try {
-    const r = await fetch("https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: texto })
-    });
-    const data = await r.json();
-    const respuesta = data.reply || "¡Pardiez! Mis pensamientos se han turbado.";
-
-    addMsg('Quijote', respuesta);
-    speak(respuesta, () => {
-      modo = "idle";
-      if (escuchando) iniciarReconocimiento();
-    });
-  } catch (err) {
-    console.error("Error:", err);
+  
+  // enviarMensaje maneja UI, spinners, fetch y speak internamente
+  // Le pasamos silent=false para que añada el mensaje del usuario a la pantalla
+  const respuesta = await enviarMensaje(texto, false, () => {
     modo = "idle";
     if (escuchando) iniciarReconocimiento();
-  } finally {
-    hideSpinner();
+  });
+
+  // Si no hay respuesta es porque hubo un error en la red y speak no se ejecutará
+  if (!respuesta) {
+    modo = "idle";
+    if (escuchando) iniciarReconocimiento();
   }
 }
 
@@ -151,9 +143,7 @@ window.addEventListener('DOMContentLoaded', () => {
         escuchando = true;
         btn.classList.add("active");
 
-        // 1. El Quijote da las instrucciones al encender
-        speak("Hablad, caballero. Decid 'Oye Quijote' para iniciar y 'Responde Quijote' para enviarme vuestras nuevas.", () => {
-          // 2. Cuando termine de hablar, el sistema intentará abrir el micro solo
+        speak(INSTRUCTIONS, () => {
           iniciarReconocimiento();
         });
 
@@ -161,13 +151,11 @@ window.addEventListener('DOMContentLoaded', () => {
         escuchando = false;
         btn.classList.remove("active");
         detenerReconocimiento();
-        modo = "idle"; // Reseteamos el modo
+        modo = "idle";
 
-        // 3. El Quijote se despide al apagar
-        speak("Quedad con Dios. Mi lanza descansa hasta vuestro regreso.");
+        // Usamos la constante dinámica FAREWELL
+        speak(FAREWELL);
       }
     });
   }
-
 });
-
