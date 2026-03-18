@@ -11,17 +11,10 @@ const isEnglishPage = window.location.pathname.includes('english.html');
 const TUTOR_NAME = isEnglishPage ? "Lemony" : "Quijote";
 
 /* --- CONFIGURACIÓN DE ENDPOINTS DINÁMICOS --- */
-// 1. Detectamos si el código está corriendo en tu PC o ya subido en Render
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // 2. Definimos la URL base de Render
 const RENDER_URL = "https://don-quijote-backend.onrender.com";
-
-/**
- * LÓGICA DE RUTAS:
- * - Si estamos en Render, usamos rutas relativas ("./archivo.php") para evitar problemas de CORS internos.
- * - Si estamos en Local, usamos la URL completa de Render para que los mensajes lleguen a la nube.
- */
 const backendUrlLemony = isLocal ? `${RENDER_URL}/Lemony.php` : "./Lemony.php";
 const backendUrlQuijote = isLocal ? `${RENDER_URL}/DonQuijoteChatbot.php` : "./DonQuijoteChatbot.php";
 
@@ -32,6 +25,7 @@ console.log(`[🔗 Endpoint]: ${BACKEND_URL}`);
 
 /* --- MEMORIA DINÁMICA --- */
 export let conversationHistory = [];
+window.conversationHistory = conversationHistory;
 export let selectedModel = "trinity";
 
 /**
@@ -47,6 +41,7 @@ export async function enviarMensaje(texto, silent = false, onSpeakEnd = null) {
     // 1. Interfaz y Memoria Local
     if (!silent) addMsg("Tú", mensajeLimpio);
     conversationHistory.push({ role: "user", content: mensajeLimpio });
+    window.conversationHistory = conversationHistory;
 
     showSpinner();
 
@@ -92,7 +87,6 @@ export async function enviarMensaje(texto, silent = false, onSpeakEnd = null) {
             conversationHistory.push({ role: "assistant", content: respuestaIA });
 
             // Ejecutar TTS (Voz configurada en tts.js)
-            // Pasamos un callback vacío para que el sistema de voz sepa cuándo termina si fuera necesario
             if (onSpeakEnd) {
                 speak(respuestaIA, onSpeakEnd);
             } else {
@@ -119,7 +113,7 @@ export async function enviarMensaje(texto, silent = false, onSpeakEnd = null) {
 }
 
 /**
- * Reduce el historial mediante IA
+ * Reduce el historial mediante IA (Corregido con Headers de seguridad)
  */
 async function resumirHistorial() {
     console.log("📜 Optimizando memoria del tutor...");
@@ -128,7 +122,11 @@ async function resumirHistorial() {
 
         const response = await fetch(BACKEND_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            mode: "cors", // <--- AGREGADO
+            headers: { 
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest" // <--- AGREGADO
+            },
             body: JSON.stringify({
                 message: isEnglishPage ? "Summarize our progress." : "Resume nuestras aventuras.",
                 history: conversationHistory,
@@ -145,11 +143,14 @@ async function resumirHistorial() {
                 { role: "assistant", content: prefijo + data.reply },
                 ...mensajesRecientes
             ];
+            // Sincronizamos la memoria global después del resumen
+            window.conversationHistory = conversationHistory; 
             console.log("✅ Memoria optimizada.");
         }
     } catch (err) {
         console.warn("Fallo al resumir, truncando historial manualmente.");
         conversationHistory = conversationHistory.slice(-5);
+        window.conversationHistory = conversationHistory;
     }
 }
 
