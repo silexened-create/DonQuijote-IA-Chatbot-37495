@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="Learn English with 'A Series of Unfortunate Events' and AI. An immersive language learning experience." />
+    <meta name="keywords" content="English Learning, AI, Lemony Snicket, Baudelaire, Education, Chatbot" />
+    <meta name="author" content="Lemony Snicket English Project" />
+    <meta property="og:title" content="Unfortunate English - The Baudelaire Tutor" />
+    <meta property="og:description"
+        content="Practice your English with the somber but educational guidance of Lemony Snicket." />
+    <meta property="og:type" content="website" />
+    <title>Unfortunate English | AI Learning Experience</title>
+
+    <link rel="stylesheet" href="don.css" />
+    <link rel="icon" href="Image/Imagen4.png" type="image/png" />
+    <style>
+        /* Estilos heredados y adaptados */
+        #chapter-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+            gap: 10px;
+            padding: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            background: rgba(20, 20, 20, 0.8);
+            /* Un tono más oscuro y sombrío */
+            border-radius: 8px;
+            border: 1px solid rgba(80, 80, 80, 0.5);
+            scrollbar-width: thin;
+            scrollbar-color: #555 rgba(255, 255, 255, 0.1);
+        }
+
+        #chapter-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #chapter-container::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 10px;
+        }
+
+        #chapter-container button {
+            flex: 0 0 auto;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            background: #333;
+            /* Estilo victoriano/gótico */
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #chapter-container button:hover {
+            background: #444;
+            border-color: #777;
+        }
+
+        #chapter-container button.active {
+            background: #8b1e3f;
+            border-color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ============================================================
+        Modal de BIENVENIDA (Versión Inglés)
+       ============================================================ -->
+    <div id="modal-instrucciones" class="modal-instrucciones" role="dialog" aria-labelledby="modal-title"
+        aria-modal="true">
+        <div class="modal-contenido">
+            <h1 id="modal-title">Welcome, Brave Pupil! 👁️</h1>
+
+            <p>You are about to enter a world of <strong>miserable occurrences</strong> to practice your English with
+                the assistance of our AI Tutor.</p>
+
+            <h3>🎤 Steps for your training:</h3>
+            <ol>
+                <li><strong>Wake the Tutor:</strong> Press the 🎤 button to start listening.</li>
+                <li><strong>Call for help:</strong> Say clearly <strong>"Hey Lemony!"</strong> and he will respond
+                    to your vocabulary questions.</li>
+                <li><strong>Ask anything:</strong> Inquire about "words which here mean..." to expand your knowledge.
+                </li>
+            </ol>
+
+            <div class="consejos-box">
+                <p><strong>🌟 Educational Secrets:</strong></p>
+                <ul style="text-align: left; margin: 10px 0 15px 20px;">
+                    <li>Speak clearly. The Baudelaire orphans depend on your understanding! 💼</li>
+                    <li>Our AI will explain complex idioms in the style of Lemony Snicket.</li>
+                </ul>
+            </div>
+
+            <p>Are you ready for this unfortunate but educational journey?</p>
+            <button id="btn-aceptar" aria-label="Start English Adventure">Yes, let's learn!</button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+        Contenido principal
+       ============================================================ -->
+    <div id="contenido-principal" style="display:none;">
+
+        <header role="banner">
+            <div class="header-content">
+                <img id="Papel" src="Image/Imagen2.png" alt="Ancient paper" style="width:60px;height:60px;" />
+                <h1>Unfortunate English IA</h1>
+                <img id="Libro" src="Image/Imagen4.png" alt="Mysterious Eye" style="width:60px;height:60px;" />
+            </div>
+
+            <nav role="navigation" aria-label="Main menu">
+                <ul>
+                    <li><a href="#chat-container">Ask Tutor</a></li>
+                    <li><a href="#texto-sincronizado">Read Along</a></li>
+                    <li><a href="#reproductor-fijo">Audiobook</a></li>
+                    <li>
+                        <a href="index.html"
+                            style="background: #8b1e3f; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: bold; border: 1px solid #fff;">
+                            Spanish Version (Quijote)
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+
+        <main role="main">
+            <section class="hero-section">
+                <h1>Master English with the Baudelaires</h1>
+                <p>A word which here means "Learn vocabulary through tragic storytelling."</p>
+            </section>
+
+            <div class="galeria">
+                <img id="Mano" src="Image/Imagen3.png" alt="Gothic Decoration" role="presentation" />
+
+                <div id="modelo-container" aria-label="3D Visualization"></div>
+
+                <div id="chat-container" role="log" aria-live="polite">
+                    <div id="chat-history" aria-label="Conversation History"></div>
+
+                    <div id="spinner" style="display:none; text-align:center; margin:10px 0;">
+                        <span class="sr-only">The Tutor is thinking...</span>
+                        <em>Lemony is writing...</em>
+                    </div>
+
+                    <div class="input-group" style="display:flex; gap:10px; margin-top:10px;">
+                        <input id="chat-input" type="text" placeholder="Type your question here..."
+                            aria-label="Message for the Tutor" style="flex:1; padding:10px;">
+                        <button id="mic-btn" type="button" aria-label="Voice Recognition">🎤</button>
+                        <button id="send-btn" type="button" aria-label="Send message">Send</button>
+                    </div>
+
+                    <div id="technical-metrics"
+                        style="font-size: 0.7em; color: #8b1e3f; margin-top: 8px; font-family: monospace; opacity: 0.8;">
+                        Connecting to the Library...
+                    </div>
+                </div>
+
+                <img id="Pluma" src="Image/Imagen1.png" alt="Quill pen" role="presentation" />
+            </div>
+
+            <div id="texto-sincronizado" aria-label="Synchronized Text"></div>
+        </main>
+
+        <footer role="contentinfo">
+            <div class="footer-stats">
+                <p>&copy; 2026 Unfortunate English. Tragic literacy and Modern AI.</p>
+                <div id="global-metrics-footer" style="font-size: 0.8em; margin-top: 5px;">
+                    Payload: <span id="stat-payload">0b</span> |
+                    Tokens: <span id="stat-tokens">0</span> |
+                    Messages: <span id="stat-messages">0</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ============================================================
+        Reproductor de audio (Configurado para Inglés)
+       ============================================================ -->
+    <div id="reproductor-fijo" role="region" aria-label="Audio player">
+        <div
+            style="display: flex; align-items: center; justify-content: center; width: 100%; gap: 15px; flex-wrap: wrap; margin-bottom: 5px;">
+            <audio id="audio-quijote" controls style="flex: 1; max-width: 500px; height: 32px;"></audio>
+
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <input id="salto-tiempo" type="text" placeholder="00:00"
+                    style="width: 70px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.8em; color: #333;">
+                <button id="btn-salto-tiempo"
+                    style="padding: 4px 8px; font-size: 0.8em; background:#fff; color:#333; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Go</button>
+            </div>
+        </div>
+
+        <div id="chapter-container">
+            <!-- Generado dinámicamente -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.getElementById("chapter-container");
+            if (!container) return;
+            container.innerHTML = "";
+
+            // Tenemos 13 capítulos + el segmento de biblioteca
+            for (let i = 1; i <= 14; i++) {
+                const num = String(i).padStart(2, '0');
+                const btn = document.createElement("button");
+                btn.textContent = i === 14 ? `Library` : `Chapter ${i}`;
+
+                // APUNTAR A LAS NUEVAS CARPETAS DE ASSETS
+                btn.dataset.audio = `./split_audios_english/chapter_${num}.m4a`;
+                btn.dataset.json = `./english_assets/capitulos/chapter_${num}_adjusted.json`;
+
+                btn.setAttribute("aria-label", `Load chapter ${i}`);
+                container.appendChild(btn);
+            }
+        });
+    </script>
+
+    <!-- Reutilización de scripts con lógica dinámica -->
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/animacionQuijote.js" type="module"></script>
+    <script src="js/tts.js" type="module"></script>
+    <script src="js/recognition.js" type="module"></script>
+    <script src="js/chat.js" type="module"></script>
+    <script src="js/sync.js" type="module"></script>
+
+</body>
+
+</html>
