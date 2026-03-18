@@ -209,11 +209,11 @@
             if (!container) return;
             container.innerHTML = "";
 
-            // Tenemos 13 capítulos + el segmento de biblioteca
-            for (let i = 1; i <= 14; i++) {
+            // Tenemos 13 capítulos
+            for (let i = 1; i <= 13; i++) {
                 const num = String(i).padStart(2, '0');
                 const btn = document.createElement("button");
-                btn.textContent = i === 14 ? `Library` : `Chapter ${i}`;
+                btn.textContent = `Chapter ${i}`;
 
                 // APUNTAR A LAS NUEVAS CARPETAS DE ASSETS
                 btn.dataset.audio = `./split_audios_english/chapter_${num}.m4a`;
