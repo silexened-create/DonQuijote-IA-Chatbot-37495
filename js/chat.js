@@ -1,6 +1,5 @@
 /**
- * chat.js — Versión Dual Snicket/Quijote (Corregida)
- * ---------------------------------------------------------------------------
+ * chat.js — Versión Dual Snicket/Quijote
  * Gestiona la comunicación con los dos backends especializados.
  */
 
@@ -11,20 +10,25 @@ import { speak } from './tts.js';
 const isEnglishPage = window.location.pathname.includes('english.html');
 const TUTOR_NAME = isEnglishPage ? "Lemony" : "Quijote";
 
-/* --- CONFIGURACIÓN DE ENDPOINTS --- */
-// Detectamos si estamos en entorno local o en Render
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
-console.log(`[Config] Entorno detectado: ${isLocal ? 'DEVELOPMENT (Local)' : 'PRODUCTION (Render)'}`);
+/* --- CONFIGURACIÓN DE ENDPOINTS DINÁMICOS --- */
+// 1. Detectamos si el código está corriendo en tu PC o ya subido en Render
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-const backendUrlLemony = isLocal 
-    ? "./lemony.php" 
-    : "https://don-quijote-backend.onrender.com/Lemony.php";
-const backendUrlQuijote = isLocal 
-    ? "./DonQuijoteChatbot.php" 
-    : "https://don-quijote-backend.onrender.com/DonQuijoteChatbot.php";
+// 2. Definimos la URL base de Render
+const RENDER_URL = "https://don-quijote-backend.onrender.com";
+
+/**
+ * LÓGICA DE RUTAS:
+ * - Si estamos en Render, usamos rutas relativas ("./archivo.php") para evitar problemas de CORS internos.
+ * - Si estamos en Local, usamos la URL completa de Render para que los mensajes lleguen a la nube.
+ */
+const backendUrlLemony = isLocal ? `${RENDER_URL}/Lemony.php` : "./Lemony.php";
+const backendUrlQuijote = isLocal ? `${RENDER_URL}/DonQuijoteChatbot.php` : "./DonQuijoteChatbot.php";
 
 const BACKEND_URL = isEnglishPage ? backendUrlLemony : backendUrlQuijote;
-console.log(`[Config] Endpoint seleccionado: ${BACKEND_URL} (isEnglishPage: ${isEnglishPage})`);
+
+console.log(`[🚀 Entorno]: ${isLocal ? 'DEVELOPMENT' : 'PRODUCTION (Render)'}`);
+console.log(`[🔗 Endpoint]: ${BACKEND_URL}`);
 
 /* --- MEMORIA DINÁMICA --- */
 export let conversationHistory = [];
