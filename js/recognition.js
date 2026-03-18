@@ -69,37 +69,50 @@ export function detenerReconocimiento() {
   } catch (e) { }
 }
 recog.onresult = async (evt) => {
+  // Si la IA está hablando, ignoramos cualquier ruido del micro
   if (window.quijoteHablando) return;
 
-  // 1. Capturar lo que el usuario dijo
   let text = evt.results[evt.results.length - 1][0].transcript.trim().toLowerCase();
   console.log("🟩 [Audio]:", text);
-  // --- Detección de Inicio ---
-  if (WAKE_WORDS.some(d => text.includes(d))) {
+
+  // --- 1. DETECCIÓN DE INICIO (Wake Word) ---
+  if (WAKE_WORDS.some(word => text.includes(word))) {
     modo = "keyword";
     preguntaPendiente = "";
     detenerReconocimiento();
     console.log("🔔 [Modo]: Tutor atento.");
-    speak(GREETING, () => iniciarReconocimiento());
+    // El callback reinicia el micro tras saludar
+    speak(GREETING, () => {
+        modo = "keyword"; // Aseguramos que siga en modo keyword
+        iniciarReconocimiento();
+    });
     return;
   }
 
+  // Si no hemos dicho la palabra clave, no acumulamos nada
   if (modo !== "keyword") return;
 
-  // --- Detección de Envío ---
-  if (SEND_COMMANDS.some(f => text.includes(f))) {
-    let limpia = text;
-    SEND_COMMANDS.forEach(f => limpia = limpia.replace(f, ""));
-    const mensajeFinal = (preguntaPendiente + " " + limpia).trim();
+  // --- 2. DETECCIÓN DE ENVÍO ---
+  if (SEND_COMMANDS.some(cmd => text.includes(cmd))) {
+    // Limpiamos el comando de envío del texto acumulado
+    let mensajeFinal = (preguntaPendiente + " " + text).trim();
+    SEND_COMMANDS.forEach(cmd => {
+        mensajeFinal = mensajeFinal.replace(cmd, "");
+    });
 
     if (mensajeFinal.length > 2) {
       modo = "processing";
+      console.log("📤 [Enviando]:", mensajeFinal);
       procesarEntrada(mensajeFinal);
     }
     return;
   }
-  // 3. Acumular texto
-  preguntaPendiente += " " + text;
+
+  // --- 3. ACUMULAR TEXTO ---
+  // Evitamos duplicar si el usuario repite la palabra clave
+  if (!WAKE_WORDS.some(word => text.includes(word))) {
+      preguntaPendiente += " " + text;
+  }
 };
 
 recog.onend = () => {
