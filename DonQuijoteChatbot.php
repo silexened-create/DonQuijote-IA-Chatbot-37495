@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
    MODELOS DISPONIBLES
    ============================================================ */
 $modelos = [
-    "trinity"  => "arcee-ai/trinity-large-preview:free",
+    "trinity"  => "baidu/cobuddy:free",
     "stepfun"  => "stepfun/step-3.5-flash:free",
     "deepseek" => "deepseek/deepseek-r1-0528:free",
     "glm"      => "z-ai/glm-4.5-air:free"
