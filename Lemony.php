@@ -38,7 +38,7 @@ if (!$apiKey) {
    MODELOS DISPONIBLES
    ============================================================ */
 $modelos = [
-    "trinity"  => "arcee-ai/trinity-large-preview:free",
+    "owlalpha"  => "openrouter/owl-alpha",
     "stepfun"  => "stepfun/step-3.5-flash:free",
     "deepseek" => "deepseek/deepseek-r1-0528:free",
     "glm"      => "z-ai/glm-4.5-air:free"
@@ -56,11 +56,11 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 
 $mensaje_usuario = $input["message"] ?? "";
 $historial = $input["history"] ?? [];
-$modelo_solicitado = $input["model"] ?? "trinity";
+$modelo_solicitado = $input["model"] ?? "owlalpha";
 $es_resumen = ($input["isSummary"] ?? false) === true;
 
 // Selección de modelo
-$modelo_activo = $modelos[$modelo_solicitado] ?? $modelos["glm"];
+$modelo_activo = $modelos[$modelo_solicitado] ?? $modelos["owlalpha"];
 
 /* ============================================================
    PROMPT DEL SISTEMA Y MENSAJES
