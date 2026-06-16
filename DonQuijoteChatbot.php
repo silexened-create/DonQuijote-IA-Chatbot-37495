@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
    MODELOS DISPONIBLES
    ============================================================ */
 $modelos = [
-    "baidu"  => "baidu/cobuddy:free",
+    "gemma"  => "google/gemma-4-26b-a4b-it:free",
     "owlalpha"  => "openrouter/owl-alpha",
     "deepseek" => "deepseek/deepseek-r1-0528:free",
     "glm"      => "z-ai/glm-4.5-air:free"
@@ -67,11 +67,11 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 
 $mensaje_usuario = $input["message"] ?? "";
 $historial = $input["history"] ?? [];
-$modelo_solicitado = $input["model"] ?? "owlalpha";
+$modelo_solicitado = $input["model"] ?? "gemma";
 $es_resumen = ($input["isSummary"] ?? false) === true;
 
 // Selección de modelo
-$modelo_activo = $modelos[$modelo_solicitado] ?? $modelos["owlalpha"];
+$modelo_activo = $modelos[$modelo_solicitado] ?? $modelos["gemma"];
 
 /* ============================================================
    PROMPT DEL SISTEMA Y MENSAJES
